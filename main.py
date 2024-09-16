@@ -1,4 +1,6 @@
 from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.layers import Dense, Input, SimpleRNN
+from tensorflow import keras
 import numpy as np
 
 text = '''
@@ -22,3 +24,33 @@ n = data.shape[0] - inp_chars
 
 x = np.array([data[i: i + inp_chars, :] for i in range(n)])
 y = data[inp_chars:]
+
+model = keras.Sequential([
+    Input((inp_chars, num_characters)),
+    SimpleRNN(128, activation='tanh'),
+    Dense(num_characters, activation='softmax')
+])
+
+model.summary()
+
+model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+hist = model.fit(x, y, batch_size=32, epochs=100)
+
+def buildPhrase(inp_str, str_len=50):
+  for i in range(str_len):
+    x = []
+    for j in range(i, i + inp_chars):
+      x.append(tokenizer.texts_to_matrix(inp_str[j]))
+
+    x = np.array(x)
+    inp = x.reshape(1, inp_chars, num_characters)
+
+    pred = model.predict(inp)
+    d = tokenizer.index_word[pred.argmax(axis=1)[0]]
+
+    inp_str += d
+
+  return inp_str
+
+res = buildPhrase('утренн')
+print(res)
